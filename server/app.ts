@@ -1,9 +1,10 @@
 import express from 'express';
 import os from 'os';
+import cors from 'cors';
 const app = express();
 const port = 3000;
 
-app.get('/metrics', (req, res) => {
+app.get('/metrics', cors(), (req, res) => {
   const metrics = {
     hostname: os.hostname(),
     platform: os.platform(),
