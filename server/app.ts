@@ -5,16 +5,25 @@ const app = express();
 const port = 3000;
 
 app.get('/metrics', cors(), (req, res) => {
-  const metrics = {
-    hostname: os.hostname(),
-    platform: os.platform(),
-    arch: os.arch(),
-    totalMemory: os.totalmem(),
-    freeMemory: os.freemem(),
-    cpus: os.cpus().length,
-    uptime: os.uptime(),
-  };
-  res.json(metrics);
+  const cpu = [];
+
+  cpu.push(os.cpus());
+
+  setTimeout(() => {
+    cpu.push(os.cpus());
+
+    const metrics = {
+      hostname: os.hostname(),
+      platform: os.platform(),
+      arch: os.arch(),
+      totalMemory: os.totalmem(),
+      freeMemory: os.freemem(),
+      cpus: cpu,
+      uptime: os.uptime(),
+    };
+    res.json(metrics);
+
+  }, 1000);
 });
 
 app.listen(port, () => {
