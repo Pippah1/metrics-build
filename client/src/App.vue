@@ -10,7 +10,7 @@ let intervalId = null;
 
 async function loadMetrics() {
   try {
-    const response = await fetch('http://localhost:3000/metrics');
+    const response = await fetch(`${import.meta.env.VITE_APP_SERVER_URL}/metrics`);
 
     if (!response.ok) {
       throw new Error(`Response status: ${response.status}`);
@@ -64,7 +64,6 @@ onBeforeUnmount(() => {
       <section class="card">
         <h2>Additional Info</h2>
         <p><strong>Cpu:</strong> {{ result.cpus[0][0].model }}</p>
-        <p><strong>Cpu Speed:</strong> {{ result.cpus[0][0].speed }} Mhz</p>
         <p><strong>Uptime:</strong> {{ (result.uptime / 60).toFixed(1) }} Min</p>
       </section>
     </div>
