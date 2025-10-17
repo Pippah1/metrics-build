@@ -4,6 +4,7 @@ import CpuUsage from './components/CpuUsage.vue';
 
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 
+const webServer = import.meta.env.VITE_WEB_SERVER_NAME || 'unknown';
 const result = ref(null);
 let intervalId = null;
 
@@ -43,7 +44,7 @@ onBeforeUnmount(() => {
         <h2>{{ result.hostname }} Info</h2>
         <p><strong>Platform:</strong> {{ result.platform }}</p>
         <p><strong>Architecture:</strong> {{ result.arch }}</p>
-        <p><strong>Responding web-server:</strong> Not sure how to get this</p>
+        <p><strong>Responding web-server:</strong> {{ webServer }}</p>
       </section>
 
       <section class="card memory">
