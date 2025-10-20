@@ -5,6 +5,6 @@ RUN npm ci
 ARG VITE_WEB_SERVER_NAME
 ENV VITE_WEB_SERVER_NAME=$VITE_WEB_SERVER_NAME
 RUN npm run build
-RUN npm install -g serve
+RUN npm install -g http-server
 EXPOSE 5173
-CMD ["serve", "-s", "dist", "-l", "5173"]
+CMD ["http-server", "dist", "-p", "5173"]
