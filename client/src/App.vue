@@ -10,7 +10,7 @@ let intervalId = null;
 
 async function loadMetrics() {
   try {
-    const response = await fetch(`${import.meta.env.VITE_APP_SERVER_URL}/metrics`);
+    const response = await fetch(`/metrics`);
 
     if (!response.ok) {
       throw new Error(`Response status: ${response.status}`);
