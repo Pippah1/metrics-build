@@ -6,6 +6,6 @@ test_job:
   tags:
     - shell
   script:
-    - echo "CI job is running. OOOOOOO LETS GOOOOOOOOO"
+    - echo "CI job is running. OOOOOOO LETS GOOOOOOOOOo"
     - uname -a
     - whoami
