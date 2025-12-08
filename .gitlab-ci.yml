@@ -1,8 +1,10 @@
 stages:
-  - shell
+  - build
 
-shell:
+test_job:
   stage: build
+  tags:
+    - shell
   script:
     - echo "CI job is running. OOOOOOO LETS GOOOOOOOOO"
     - uname -a
