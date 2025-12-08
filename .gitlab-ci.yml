@@ -4,6 +4,6 @@ stages:
 shell:
   stage: build
   script:
-    - echo "CI job is running. OOOOOOO LETS GOOOOOOOO"
+    - echo "CI job is running. OOOOOOO LETS GOOOOOOOOO"
     - uname -a
     - whoami
