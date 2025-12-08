@@ -1,0 +1,9 @@
+stages:
+  - shell
+
+shell:
+  stage: build
+  script:
+    - echo "CI job is running. OOOOOOO LETS GOOOOOOOO"
+    - uname -a
+    - whoami
