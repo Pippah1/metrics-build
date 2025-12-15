@@ -1,11 +1,68 @@
+#stages:
+#  - build
+#
+#test_job:
+#  stage: build
+#  tags:
+#    - shell
+#  script:
+#    - echo "CI job is running. OOOOOOO LETS GOOOOOOOOOo"
+#    - uname -a
+#    - whoami
+
 stages:
   - build
+  - deploy
 
-test_job:
+variables:
+  SSH_KEY: "/home/devops/.ssh/id_rsa"
+  APP_SERVER: "10.0.0.7"
+  WEB_SERVERS: "10.0.0.8 10.0.0.9"
+  DOCKER_IMAGE_BACKEND: "metrics-backend"
+  DOCKER_IMAGE_FRONTEND: "metrics-frontend"
+before_script:
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+  - eval $(ssh-agent -s)
+  - ssh-add $SSH_KEY
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+
+# For backend
+build-backend:
   stage: build
   tags:
     - shell
   script:
-    - echo "CI job is running. OOOOOOO LETS GOOOOOOOOOo"
-    - uname -a
-    - whoami
+    - echo "Building backend Docker image on app-server..."
+    - ssh -o StrictHostKeyChecking=no devops@$APP_SERVER "cd ~/metrics-backend/server && docker build -t $DOCKER_IMAGE_BACKEND ."
+
+deploy-backend:
+  stage: deploy
+  tags:
+    - shell
+  script:
+    - echo "Deploying backend container on app-server..."
+    - ssh devops@$APP_SERVER "docker stop metrics-backend || true && docker rm metrics-backend || true"
+    - ssh devops@$APP_SERVER "docker run -d --name metrics-backend -p 3000:3000 $DOCKER_IMAGE_BACKEND"
+
+# For frontend
+build-frontend:
+  stage: build
+  tags:
+    - shell
+  script:
+    - for server in $WEB_SERVERS; do
+        echo "Building frontend Docker image on $server...";
+        ssh devops@$server "cd ~/metrics-frontend/client && docker build -t $DOCKER_IMAGE_FRONTEND .";
+      done
+
+deploy-frontend:
+  stage: deploy
+  tags:
+    - shell
+  script:
+    - for server in $WEB_SERVERS; do
+        echo "Deploying frontend container on $server...";
+        ssh devops@$server "docker stop metrics-frontend || true && docker rm metrics-frontend || true";
+        ssh devops@$server "docker run -d --name metrics-frontend -p 5173:5173 $DOCKER_IMAGE_FRONTEND";
+      done
