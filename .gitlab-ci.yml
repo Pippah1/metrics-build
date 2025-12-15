@@ -34,7 +34,15 @@ build-backend:
     - shell
   script:
     - echo "Building backend Docker image on app-server..."
-    - ssh -o StrictHostKeyChecking=no devops@$APP_SERVER "cd ~/metrics-backend/server && docker build -t $DOCKER_IMAGE_BACKEND ."
+    - ssh devops@$APP_SERVER "
+        if [ ! -d ~/metrics-backend ]; then
+          git clone https://github.com/Pippah1/metrics-build.git ~/metrics-backend;
+        else
+          cd ~/metrics-backend && git pull;
+        fi &&
+        cd ~/metrics-backend/server &&
+        docker build -t $DOCKER_IMAGE_BACKEND .
+      "
 
 deploy-backend:
   stage: deploy
@@ -53,7 +61,15 @@ build-frontend:
   script:
     - for server in $WEB_SERVERS; do
         echo "Building frontend Docker image on $server...";
-        ssh devops@$server "cd ~/metrics-frontend/client && docker build -t $DOCKER_IMAGE_FRONTEND .";
+        ssh devops@$server "
+        if [ ! -d ~/metrics-frontend ]; then
+          git clone https://github.com/Pippah1/metrics-build.git ~/metrics-frontend;
+        else
+          cd ~/metrics-frontend && git pull;
+        fi &&
+        cd ~/metrics-frontend/client &&
+        docker build -t $DOCKER_IMAGE_FRONTEND .
+      "
       done
 
 deploy-frontend:
