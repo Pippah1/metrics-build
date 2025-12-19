@@ -1,15 +1,3 @@
-#stages:
-#  - build
-#
-#test_job:
-#  stage: build
-#  tags:
-#    - shell
-#  script:
-#    - echo "CI job is running. OOOOOOO LETS GOOOOOOOOOo"
-#    - uname -a
-#    - whoami
-
 stages:
   - build
   - deploy
