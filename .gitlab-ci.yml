@@ -23,7 +23,7 @@ variables:
 before_script:
   - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
   - eval $(ssh-agent -s)
-  - ssh-add /home/devops/.ssh/id_rsa
+  - ssh-add /home/gitlab-runner/.ssh/id_rsa
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
 
