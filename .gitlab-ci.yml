@@ -60,7 +60,7 @@ build-frontend:
         fi &&
         cd ~/metrics-frontend/client &&
         docker build -t $DOCKER_IMAGE_FRONTEND .
-      "
+      ";
       done
 
 deploy-frontend:
