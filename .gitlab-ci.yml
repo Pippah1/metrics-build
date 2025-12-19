@@ -26,6 +26,9 @@ before_script:
   - ssh-add /home/gitlab-runner/.ssh/id_rsa
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
+  - ssh-keyscan -H 10.0.0.7 >> ~/.ssh/known_hosts
+  - ssh-keyscan -H 10.0.0.8 >> ~/.ssh/known_hosts
+  - ssh-keyscan -H 10.0.0.9 >> ~/.ssh/known_hosts
 
 # For backend
 build-backend:
