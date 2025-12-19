@@ -151,7 +151,7 @@ th, td {
 .loading {
   text-align: center;
   font-size: 1em;
-  color: #ffd900;
+  color: #00ff88;
 }
 
 .loader {
