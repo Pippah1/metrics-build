@@ -77,7 +77,7 @@ onBeforeUnmount(() => {
 
 <style>
 body {
-  background: #f4f7f8;
+  background: #29c9a1;
   font-family: system-ui, sans-serif;
   color: #222;
   background-image: url('./assets/pexels-francesco-ungaro-998641.jpg');
