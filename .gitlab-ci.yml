@@ -7,7 +7,6 @@ variables:
   APP_SERVER: "10.0.0.7"
   WEB_SERVERS: "10.0.0.8 10.0.0.9"
   DOCKER_IMAGE_BACKEND: "metrics-backend"
-  DOCKER_IMAGE_FRONTEND: "metrics-frontend"
 before_script:
   - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
   - eval $(ssh-agent -s)
@@ -50,17 +49,23 @@ build-frontend:
   tags:
     - shell
   script:
-    - for server in $WEB_SERVERS; do
-        echo "Building frontend Docker image on $server...";
-        ssh devops@$server "
-        if [ ! -d ~/metrics-frontend ]; then
-          git clone https://github.com/Pippah1/metrics-build.git ~/metrics-frontend;
-        else
-          cd ~/metrics-frontend && git pull;
-        fi &&
-        cd ~/metrics-frontend/client &&
-        docker build -t $DOCKER_IMAGE_FRONTEND .
-      ";
+    - |
+      for server in $WEB_SERVERS; do
+        echo "Building frontend Docker image on $server..."
+        ssh devops@$server '
+          NAME=$(hostname)
+
+          if [ ! -d ~/metrics-frontend ]; then
+            git clone https://github.com/Pippah1/metrics-build.git ~/metrics-frontend
+          else
+            cd ~/metrics-frontend && git pull
+          fi
+
+          cd ~/metrics-frontend/client
+          docker build \
+            --build-arg VITE_WEB_SERVER_NAME="$NAME" \
+            -t "$NAME" .
+        '
       done
 
 deploy-frontend:
@@ -68,8 +73,18 @@ deploy-frontend:
   tags:
     - shell
   script:
-    - for server in $WEB_SERVERS; do
-        echo "Deploying frontend container on $server...";
-        ssh devops@$server "docker stop metrics-frontend || true && docker rm metrics-frontend || true";
-        ssh devops@$server "docker run -d --name metrics-frontend -p 5173:5173 $DOCKER_IMAGE_FRONTEND";
+    - |
+      for server in $WEB_SERVERS; do
+        echo "Deploying frontend container on $server..."
+        ssh devops@$server '
+          NAME=$(hostname)
+
+          docker stop "$NAME" || true
+          docker rm "$NAME" || true
+
+          docker run -d \
+            --name "$NAME" \
+            -p 5173:5173 \
+            "$NAME"
+        '
       done
