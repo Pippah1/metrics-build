@@ -93,7 +93,7 @@ deploy-frontend:
 k6-load-test:
   stage: load-test
   tags:
-    - k6
+    - docker
   before_script: []
   script:
     - echo "Running k6 load test against load balancer..."
