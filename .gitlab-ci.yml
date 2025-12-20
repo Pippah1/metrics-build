@@ -53,7 +53,7 @@ build-frontend:
     - |
       for server in $WEB_SERVERS; do
         echo "Building frontend Docker image on $server..."
-        ssh devops@$server '
+        ssh devops@$server "
           NAME=$(hostname)
 
           if [ ! -d ~/metrics-frontend ]; then
@@ -64,7 +64,7 @@ build-frontend:
 
           cd ~/metrics-frontend/client
           docker build --build-arg VITE_WEB_SERVER_NAME="$NAME" -t metrics-frontend:$CI_COMMIT_SHORT_SHA .
-        '
+        "
       done
 
 deploy-frontend:
@@ -75,15 +75,14 @@ deploy-frontend:
     - |
       for server in $WEB_SERVERS; do
         echo "Deploying frontend container on $server..."
-        ssh devops@$server '
-          CI_COMMIT_SHORT_SHA='$CI_COMMIT_SHORT_SHA'
+        ssh devops@$server "
           NAME=$(hostname)
 
           docker stop "metrics-frontend" || true
           docker rm "metrics-frontend" || true
 
-          docker run -d --name metrics-frontend -p 5173:5173 metrics-frontend:\$CI_COMMIT_SHORT_SHA
-        '
+          docker run -d --name metrics-frontend -p 5173:5173 metrics-frontend:$CI_COMMIT_SHORT_SHA
+        "
       done
 
 k6-load-test:
