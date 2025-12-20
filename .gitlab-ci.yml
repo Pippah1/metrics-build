@@ -92,9 +92,8 @@ deploy-frontend:
 
 k6-load-test:
   stage: load-test
-  image: grafana/k6:latest
   tags:
-    - shell
+    - k6
   before_script: []
   script:
     - echo "Running k6 load test against load balancer..."
