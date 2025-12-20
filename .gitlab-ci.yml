@@ -54,7 +54,7 @@ build-frontend:
       for server in $WEB_SERVERS; do
         echo "Building frontend Docker image on $server..."
         ssh devops@$server "
-          NAME=$(hostname)
+          NAME=\$(hostname)
 
           if [ ! -d ~/metrics-frontend ]; then
             git clone https://github.com/Pippah1/metrics-build.git ~/metrics-frontend
@@ -63,7 +63,7 @@ build-frontend:
           fi
 
           cd ~/metrics-frontend/client
-          docker build --build-arg VITE_WEB_SERVER_NAME="$NAME" -t metrics-frontend:$CI_COMMIT_SHORT_SHA .
+          docker build --build-arg VITE_WEB_SERVER_NAME="\$NAME" -t metrics-frontend:$CI_COMMIT_SHORT_SHA .
         "
       done
 

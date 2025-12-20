@@ -17,6 +17,7 @@ app.get('/metrics', cors(), (req, res) => {
       platform: os.platform(),
       arch: os.arch(),
       totalMemory: os.totalmem(),
+      HELLOOORANDOM BROKEEN TEXT HERE
       freeMemory: os.freemem(),
       cpus: cpu,
       uptime: os.uptime(),
