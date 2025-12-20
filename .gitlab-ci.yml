@@ -95,6 +95,11 @@ k6-load-test:
   tags:
     - docker
   before_script: []
-  script: ["k6", "run", "k6/loadtest.js"]
+  image:
+    name: grafana/k6:latest
+    entrypoint: [""]
+  script:
+    - echo "Running k6 load test against load balancer..."
+    - k6 run k6/loadtest.js
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
