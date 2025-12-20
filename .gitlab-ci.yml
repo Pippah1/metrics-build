@@ -2,12 +2,12 @@ stages:
   - build
   - deploy
   - load-test
+  - rollback
 
 variables:
   SSH_KEY: "/home/devops/.ssh/id_rsa"
   APP_SERVER: "10.0.0.7"
   WEB_SERVERS: "10.0.0.8 10.0.0.9"
-  DOCKER_IMAGE_BACKEND: "metrics-backend"
 before_script:
   - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
   - eval $(ssh-agent -s)
@@ -32,7 +32,7 @@ build-backend:
           cd ~/metrics-backend && git pull;
         fi &&
         cd ~/metrics-backend/server &&
-        docker build -t $DOCKER_IMAGE_BACKEND .
+        docker build -t metrics-backend:$CI_COMMIT_SHORT_SHA .
       "
 
 deploy-backend:
@@ -42,7 +42,7 @@ deploy-backend:
   script:
     - echo "Deploying backend container on app-server..."
     - ssh devops@$APP_SERVER "docker stop metrics-backend || true && docker rm metrics-backend || true"
-    - ssh devops@$APP_SERVER "docker run -d --name metrics-backend -p 3000:3000 $DOCKER_IMAGE_BACKEND"
+    - ssh devops@$APP_SERVER "docker run -d --name metrics-backend -p 3000:3000 metrics-backend:$CI_COMMIT_SHORT_SHA"
 
 # For frontend
 build-frontend:
@@ -63,9 +63,7 @@ build-frontend:
           fi
 
           cd ~/metrics-frontend/client
-          docker build \
-            --build-arg VITE_WEB_SERVER_NAME="$NAME" \
-            -t "$NAME" .
+          docker build --build-arg VITE_WEB_SERVER_NAME="$NAME" -t "$NAME:$CI_COMMIT_SHORT_SHA" .
         '
       done
 
@@ -83,10 +81,7 @@ deploy-frontend:
           docker stop "$NAME" || true
           docker rm "$NAME" || true
 
-          docker run -d \
-            --name "$NAME" \
-            -p 5173:5173 \
-            "$NAME"
+          docker run -d --name "$NAME" -p 5173:5173 "$NAME:$CI_COMMIT_SHORT_SHA"
         '
       done
 
@@ -101,5 +96,54 @@ k6-load-test:
   script:
     - echo "Running k6 load test against load balancer..."
     - k6 run k6/loadtest.js
+  after_script:
+    - |
+      ssh devops@$APP_SERVER "echo '$CI_COMMIT_SHORT_SHA' > ~/last-successful-backend.txt"
+      for server in $WEB_SERVERS; do
+          ssh devops@$server "echo '$CI_COMMIT_SHORT_SHA' > ~/last-successful-frontend.txt"
+      done
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
+
+rollback-backend:
+  stage: rollback
+  tags:
+    - shell
+  script:
+    - echo "Rolling back backend..."
+    - ssh devops@$APP_SERVER '
+        OLD_FILE=$(cat ~/last-successful-backend.txt)
+        if [ -f $OLD_FILE ]; then
+          OLD=$(cat $OLD_FILE)
+          docker stop metrics-backend || true
+          docker rm metrics-backend || true
+          docker run -d --name metrics-backend -p 3000:3000 metrics-backend:$OLD
+        else
+          echo "No previous successful backend version found!"
+        fi
+      '
+  when: on_failure
+
+rollback-frontend:
+  stage: rollback
+  tags:
+    - shell
+  script:
+    - echo "Rolling back frontend..."
+    - |
+      for server in $WEB_SERVERS; do
+        echo "Rolling back frontend on $server..."
+        ssh devops@$server '
+          NAME=$(hostname)
+          OLD_FILE=~/last-successful-frontend.txt
+          docker stop "$NAME" || true
+          docker rm "$NAME" || true
+          if [ -f $OLD_FILE ]; then
+            OLD=$(cat $OLD_FILE)
+            docker run -d --name "$NAME" -p 5173:5173 "$NAME:$OLD"
+          else
+            echo "No previous successful frontend version found!"
+          fi
+        '
+      done
+  when: on_failure
