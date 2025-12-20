@@ -26,6 +26,6 @@ app.get('/metrics', cors(), (req, res) => {
   }, 1000);
 });
 
-app.listen(port, () => {
+app.listen(port, () => { 
   return console.log(`Express is listening at http://localhost:${port}`);
 });
