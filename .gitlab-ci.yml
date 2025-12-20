@@ -63,7 +63,7 @@ build-frontend:
           fi
 
           cd ~/metrics-frontend/client
-          docker build --build-arg VITE_WEB_SERVER_NAME="$NAME" -t $NAME:$CI_COMMIT_SHORT_SHA .
+          docker build --build-arg VITE_WEB_SERVER_NAME="$NAME" -t metrics-frontend:$CI_COMMIT_SHORT_SHA .
         '
       done
 
@@ -78,10 +78,10 @@ deploy-frontend:
         ssh devops@$server '
           NAME=$(hostname)
 
-          docker stop "$NAME" || true
-          docker rm "$NAME" || true
+          docker stop "metrics-frontend" || true
+          docker rm "metrics-frontend" || true
 
-          docker run -d --name "$NAME" -p 5173:5173 "$NAME:$CI_COMMIT_SHORT_SHA"
+          docker run -d --name metrics-frontend -p 5173:5173 metrics-frontend:$CI_COMMIT_SHORT_SHA
         '
       done
 
@@ -96,7 +96,7 @@ k6-load-test:
   script:
     - echo "Running k6 load test against load balancer..."
     - k6 run k6/loadtest.js
-    -  - ssh devops@$APP_SERVER "echo '${CI_COMMIT_SHORT_SHA:-latest}' > ~/last-successful-backend.txt"
+    - ssh devops@$APP_SERVER "echo '${CI_COMMIT_SHORT_SHA:-latest}' > ~/last-successful-backend.txt"
     - |
       for server in $WEB_SERVERS; do
         ssh devops@$server "echo '${CI_COMMIT_SHORT_SHA:-latest}' > ~/last-successful-frontend.txt"
@@ -117,6 +117,7 @@ rollback-backend:
           docker stop metrics-backend || true
           docker rm metrics-backend || true
           docker run -d --name metrics-backend -p 3000:3000 metrics-backend:$OLD
+          docker image prune -f
         else
           echo "No previous successful backend version found!"
         fi
@@ -135,11 +136,12 @@ rollback-frontend:
         ssh devops@$server '
           NAME=$(hostname)
           OLD_FILE=~/last-successful-frontend.txt
-          docker stop "$NAME" || true
-          docker rm "$NAME" || true
           if [ -f $OLD_FILE ]; then
+            docker stop metrics-frontend || true
+            docker rm metrics-frontend || true
             OLD=$(cat $OLD_FILE)
-            docker run -d --name "$NAME" -p 5173:5173 "$NAME:$OLD"
+            docker run -d --name metrics-frontend -p 5173:5173 metrics-frontend:$OLD
+            docker image prune -f
           else
             echo "No previous successful frontend version found!"
           fi
