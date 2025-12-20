@@ -1,6 +1,7 @@
 stages:
   - build
   - deploy
+  - load-test
 
 variables:
   SSH_KEY: "/home/devops/.ssh/id_rsa"
@@ -88,3 +89,14 @@ deploy-frontend:
             "$NAME"
         '
       done
+
+k6-load-test:
+  stage: load-test
+  image: grafana/k6:latest
+  tags:
+    - shell
+  script:
+    - echo "Running k6 load test against load balancer..."
+    - k6 run k6/loadtest.js
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
