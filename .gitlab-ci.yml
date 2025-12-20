@@ -96,11 +96,20 @@ k6-load-test:
   script:
     - echo "Running k6 load test against load balancer..."
     - k6 run k6/loadtest.js
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+save-successful-commit:
+  stage: load-test
+  tags:
+    - shell
+  script:
     - ssh devops@$APP_SERVER "echo '${CI_COMMIT_SHORT_SHA:-latest}' > ~/last-successful-backend.txt"
     - |
       for server in $WEB_SERVERS; do
         ssh devops@$server "echo '${CI_COMMIT_SHORT_SHA:-latest}' > ~/last-successful-frontend.txt"
       done
+  needs: [k6-load-test]
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -110,18 +119,19 @@ rollback-backend:
     - shell
   script:
     - echo "Rolling back backend..."
-    - ssh devops@$APP_SERVER '
+    - |
+      ssh devops@$APP_SERVER "
         OLD_FILE=~/last-successful-backend.txt
-        if [ -f "$OLD_FILE" ]; then
-          OLD=$(cat "$OLD_FILE")
+        if [ -f \"\$OLD_FILE\" ]; then
+          OLD=\$(cat \"\$OLD_FILE\")
           docker stop metrics-backend || true
           docker rm metrics-backend || true
-          docker run -d --name metrics-backend -p 3000:3000 metrics-backend:$OLD
+          docker run -d --name metrics-backend -p 3000:3000 metrics-backend:\$OLD
           docker image prune -f
         else
-          echo "No previous successful backend version found!"
+          echo 'No previous successful backend version found!'
         fi
-      '
+      "
   when: on_failure
 
 rollback-frontend:
@@ -133,18 +143,17 @@ rollback-frontend:
     - |
       for server in $WEB_SERVERS; do
         echo "Rolling back frontend on $server..."
-        ssh devops@$server '
-          NAME=$(hostname)
+        ssh devops@$server "
           OLD_FILE=~/last-successful-frontend.txt
-          if [ -f $OLD_FILE ]; then
+          if [ -f \"\$OLD_FILE\" ]; then
             docker stop metrics-frontend || true
             docker rm metrics-frontend || true
-            OLD=$(cat $OLD_FILE)
-            docker run -d --name metrics-frontend -p 5173:5173 metrics-frontend:$OLD
+            OLD=\$(cat \"\$OLD_FILE\")
+            docker run -d --name metrics-frontend -p 5173:5173 metrics-frontend:\$OLD
             docker image prune -f
           else
-            echo "No previous successful frontend version found!"
+            echo 'No previous successful frontend version found!'
           fi
-        '
+        "
       done
   when: on_failure
