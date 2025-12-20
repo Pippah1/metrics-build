@@ -17,7 +17,6 @@ app.get('/metrics', cors(), (req, res) => {
       platform: os.platform(),
       arch: os.arch(),
       totalMemory: os.totalmem(),
-      HELLOOORANDOM BROKEEN TEXT HERE
       freeMemory: os.freemem(),
       cpus: cpu,
       uptime: os.uptime(),
@@ -27,6 +26,6 @@ app.get('/metrics', cors(), (req, res) => {
   }, 1000);
 });
 
-app.listen(port, () => { 
+app.listen(port, () => {
   return console.log(`Express is listening at http://localhost:${port}`);
 });

@@ -11,7 +11,7 @@ export const options = {
 };
 
 export default function () {
-  const res = http.get('http://192.168.86.41/');
+  const res = http.get('http://192.168.86.41/NOTAREALENDPOINT');
   check(res, {
     'status is 200': (r) => r.status === 200,
   });
