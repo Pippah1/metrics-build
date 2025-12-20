@@ -76,12 +76,13 @@ deploy-frontend:
       for server in $WEB_SERVERS; do
         echo "Deploying frontend container on $server..."
         ssh devops@$server '
+          CI_COMMIT_SHORT_SHA='$CI_COMMIT_SHORT_SHA'
           NAME=$(hostname)
 
           docker stop "metrics-frontend" || true
           docker rm "metrics-frontend" || true
 
-          docker run -d --name metrics-frontend -p 5173:5173 metrics-frontend:$CI_COMMIT_SHORT_SHA
+          docker run -d --name metrics-frontend -p 5173:5173 metrics-frontend:\$CI_COMMIT_SHORT_SHA
         '
       done
 
