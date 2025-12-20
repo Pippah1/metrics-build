@@ -108,7 +108,7 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 15px;
 }
-
+ 
 .card.memory, .card.cpu {
   grid-column: span 2; /* span 2 columns on large screens */
 }
