@@ -1,18 +1,39 @@
 import express from 'express';
 import os from 'os';
 import cors from 'cors';
+import client from 'prom-client';
+
 const app = express();
 const port = 3000;
 
-app.get('/metrics', cors(), (req, res) => {
-  const cpu = [];
+const register = new client.Registry();
 
+client.collectDefaultMetrics({ register });
+
+const httpDuration = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'HTTP request latency',
+  labelNames: ['method', 'route', 'status'],
+});
+
+register.registerMetric(httpDuration);
+
+app.use((req, res, next) => {
+  const end = httpDuration.startTimer({ method: req.method, route: req.path });
+  res.on('finish', () => {
+    end({ status: res.statusCode });
+  });
+  next();
+});
+
+app.get('/info', cors(), (req, res) => {
+  const cpu = [];
   cpu.push(os.cpus());
 
   setTimeout(() => {
     cpu.push(os.cpus());
 
-    const metrics = {
+    res.json({
       hostname: os.hostname(),
       platform: os.platform(),
       arch: os.arch(),
@@ -20,12 +41,15 @@ app.get('/metrics', cors(), (req, res) => {
       freeMemory: os.freemem(),
       cpus: cpu,
       uptime: os.uptime(),
-    };
-    res.json(metrics);
-
+    });
   }, 1000);
 });
 
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+
 app.listen(port, () => {
-  return console.log(`Express is listening at http://localhost:${port}`);
+  console.log(`Express listening on http://localhost:${port}`);
 });
