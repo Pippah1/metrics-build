@@ -10,7 +10,7 @@ let intervalId = null;
 
 async function loadMetrics() {
   try {
-    const response = await fetch(`/metrics`);
+    const response = await fetch(`/info`);
 
     if (!response.ok) {
       throw new Error(`Response status: ${response.status}`);
